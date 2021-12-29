@@ -1,0 +1,120 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: todo-list
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: todo-list
+  name: todo-list-backend
+spec:
+  selector:
+    matchLabels:
+      app: todo-list-backend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: todo-list-backend
+    spec:
+      containers:
+      - name: todo-list-backend
+        image: registry.digitalocean.com/acwwat-do-k8s-gitops/todo-list-backend:0.0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: todo-list
+  name: todo-list-backend
+spec:
+  ports:
+  - port: 80
+    targetPort: 8081
+  selector:
+    app: todo-list-backend
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-list-frontend-config
+  namespace: todo-list
+data:
+  config.js: |
+    // eslint-disable-next-line no-unused-vars
+    var config = (() => {
+      return {
+          "VUE_APP_BACKEND_URL": ""
+      };
+    })();
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: todo-list
+  name: todo-list-frontend
+spec:
+  selector:
+    matchLabels:
+      app: todo-list-frontend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: todo-list-frontend
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: todo-list-frontend-config
+      containers:
+      - name: todo-list-frontend
+        image: registry.digitalocean.com/acwwat-do-k8s-gitops/todo-list-frontend:0.0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/share/nginx/html/js/config.js
+          subPath: config.js
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: todo-list
+  name: todo-list-frontend
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: todo-list-frontend
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: todo-list
+  name: todo-list
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: todo-list-backend
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: todo-list-frontend
+            port:
+              number: 80
