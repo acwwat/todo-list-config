@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: todo-list-backend
-        image: registry.digitalocean.com/acwwat-do-k8s-gitops/todo-list-backend:0.0.2
+        image: registry.digitalocean.com/acwwat-do-k8s-gitops/todo-list-backend:0.0.3
         imagePullPolicy: Always
         ports:
         - containerPort: 8081
@@ -72,7 +72,7 @@ spec:
             name: todo-list-frontend-config
       containers:
       - name: todo-list-frontend
-        image: registry.digitalocean.com/acwwat-do-k8s-gitops/todo-list-frontend:0.0.2
+        image: registry.digitalocean.com/acwwat-do-k8s-gitops/todo-list-frontend:0.0.3
         imagePullPolicy: Always
         ports:
         - containerPort: 80
